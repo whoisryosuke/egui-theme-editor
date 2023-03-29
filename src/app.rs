@@ -8,6 +8,8 @@ pub struct TemplateApp {
     // this how you opt-out of serialization of a member
     #[serde(skip)]
     value: f32,
+
+    theme: egui::Visuals,
 }
 
 impl Default for TemplateApp {
@@ -16,6 +18,7 @@ impl Default for TemplateApp {
             // Example stuff:
             label: "Hello World!".to_owned(),
             value: 2.7,
+            theme: egui::Visuals::dark(),
         }
     }
 }
@@ -45,7 +48,13 @@ impl eframe::App for TemplateApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let Self { label, value } = self;
+        let Self {
+            label,
+            value,
+            theme,
+        } = self;
+
+        ctx.set_visuals(theme.clone());
 
         // Examples of how to create different panels and windows.
         // Pick whichever suits you.
@@ -66,6 +75,9 @@ impl eframe::App for TemplateApp {
 
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
             ui.heading("Side Panel");
+
+            ui.label("Hyperlink color:");
+            ui.color_edit_button_srgba(&mut theme.hyperlink_color);
 
             ui.horizontal(|ui| {
                 ui.label("Write something: ");
