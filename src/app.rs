@@ -1,9 +1,20 @@
+#[derive(Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+enum DropdownValues {
+    First,
+    Second,
+    Third,
+}
+
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct TemplateApp {
     // Example stuff:
     label: String,
+
+    boolean: bool,
+
+    radio: DropdownValues,
 
     // this how you opt-out of serialization of a member
     #[serde(skip)]
@@ -17,6 +28,8 @@ impl Default for TemplateApp {
         Self {
             // Example stuff:
             label: "Hello World!".to_owned(),
+            boolean: false,
+            radio: DropdownValues::First,
             value: 2.7,
             theme: egui::Visuals::dark(),
         }
@@ -50,6 +63,8 @@ impl eframe::App for TemplateApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let Self {
             label,
+            boolean,
+            radio,
             value,
             theme,
         } = self;
@@ -74,45 +89,89 @@ impl eframe::App for TemplateApp {
         });
 
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
-            ui.heading("Side Panel");
+            ui.heading("Theme Editor");
 
             ui.label("Hyperlink color:");
             ui.color_edit_button_srgba(&mut theme.hyperlink_color);
+            ui.label("faint_bg_color:");
+            ui.color_edit_button_srgba(&mut theme.faint_bg_color);
+            ui.label("extreme_bg_color:");
+            ui.color_edit_button_srgba(&mut theme.extreme_bg_color);
+            ui.label("code_bg_color:");
+            ui.color_edit_button_srgba(&mut theme.code_bg_color);
+            ui.label("warn_fg_color:");
+            ui.color_edit_button_srgba(&mut theme.warn_fg_color);
+            ui.label("error_fg_color:");
+            ui.color_edit_button_srgba(&mut theme.error_fg_color);
+            ui.label("window_fill:");
+            ui.color_edit_button_srgba(&mut theme.window_fill);
+            ui.label("panel_fill:");
+            ui.color_edit_button_srgba(&mut theme.panel_fill);
+            ui.label("window_stroke.color:");
+            ui.color_edit_button_srgba(&mut theme.window_stroke.color);
 
-            ui.horizontal(|ui| {
-                ui.label("Write something: ");
-                ui.text_edit_singleline(label);
-            });
+            ui.strong("Selection");
+            ui.label("selection.bg_fill:");
+            ui.color_edit_button_srgba(&mut theme.selection.bg_fill);
+            ui.label("selection.stroke.color:");
+            ui.color_edit_button_srgba(&mut theme.selection.stroke.color);
 
-            ui.add(egui::Slider::new(value, 0.0..=10.0).text("value"));
-            if ui.button("Increment").clicked() {
-                *value += 1.0;
-            }
+            ui.strong("Shadows");
+            ui.label("window_shadow.color:");
+            ui.color_edit_button_srgba(&mut theme.window_shadow.color);
+            ui.label("popup_shadow.color:");
+            ui.color_edit_button_srgba(&mut theme.popup_shadow.color);
 
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 0.0;
-                    ui.label("powered by ");
-                    ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-                    ui.label(" and ");
-                    ui.hyperlink_to(
-                        "eframe",
-                        "https://github.com/emilk/egui/tree/master/crates/eframe",
-                    );
-                    ui.label(".");
-                });
-            });
+            ui.heading("Widgets");
+            ui.strong("inactive");
+            ui.color_edit_button_srgba(&mut theme.widgets.inactive.bg_fill);
+            ui.color_edit_button_srgba(&mut theme.widgets.inactive.weak_bg_fill);
+            ui.color_edit_button_srgba(&mut theme.widgets.inactive.bg_stroke.color);
+            ui.strong("hovered");
+            ui.color_edit_button_srgba(&mut theme.widgets.hovered.bg_fill);
+            ui.color_edit_button_srgba(&mut theme.widgets.hovered.weak_bg_fill);
+            ui.color_edit_button_srgba(&mut theme.widgets.hovered.bg_stroke.color);
+            ui.strong("active");
+            ui.color_edit_button_srgba(&mut theme.widgets.active.bg_fill);
+            ui.color_edit_button_srgba(&mut theme.widgets.active.weak_bg_fill);
+            ui.color_edit_button_srgba(&mut theme.widgets.active.bg_stroke.color);
+            ui.strong("noninteractive");
+            ui.color_edit_button_srgba(&mut theme.widgets.noninteractive.bg_fill);
+            ui.color_edit_button_srgba(&mut theme.widgets.noninteractive.weak_bg_fill);
+            ui.color_edit_button_srgba(&mut theme.widgets.noninteractive.bg_stroke.color);
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
 
-            ui.heading("eframe template");
-            ui.hyperlink("https://github.com/emilk/eframe_template");
-            ui.add(egui::github_link_file!(
-                "https://github.com/emilk/eframe_template/blob/master/",
-                "Source code."
-            ));
+            ui.heading("egui theme editor playground");
+            ui.label("preview your theme's changes here with most components visible");
+            ui.hyperlink("https://github.com/whoisryosuke/egui-theme-editor");
+            ui.button("Click me!");
+            ui.checkbox(boolean, "Checkbox");
+            ui.horizontal(|ui| {
+                ui.radio_value(radio, DropdownValues::First, "First");
+                ui.radio_value(radio, DropdownValues::Second, "Second");
+                ui.radio_value(radio, DropdownValues::Third, "Third");
+            });
+            ui.horizontal(|ui| {
+                ui.selectable_value(radio, DropdownValues::First, "First");
+                ui.selectable_value(radio, DropdownValues::Second, "Second");
+                ui.selectable_value(radio, DropdownValues::Third, "Third");
+            });
+            egui::ComboBox::from_label("Take your pick")
+                .selected_text(format!("{:?}", radio))
+                .show_ui(ui, |ui| {
+                    ui.style_mut().wrap = Some(false);
+                    ui.set_min_width(60.0);
+                    ui.selectable_value(radio, DropdownValues::First, "First");
+                    ui.selectable_value(radio, DropdownValues::Second, "Second");
+                    ui.selectable_value(radio, DropdownValues::Third, "Third");
+                });
+            ui.add(egui::Slider::new(value, 0.0..=360.0).suffix("°"));
+            ui.add(egui::DragValue::new(value).speed(1.0));
+            ui.add(egui::TextEdit::singleline(label).hint_text("Write something here"));
+            ui.code("ui.add(egui::DragValue::new(value).speed(1.0));");
             egui::warn_if_debug_build(ui);
         });
 
